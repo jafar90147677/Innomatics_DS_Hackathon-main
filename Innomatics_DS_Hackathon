@@ -1,0 +1,766 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "96187b3f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import numpy as np\n",
+    "import pandas as pd"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "37ca0b13",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df = pd.read_csv(\"C:/Data/uber_rides_data.xlsx - sample_train.csv\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f33ab0ea",
+   "metadata": {},
+   "source": [
+    "#### What is the shape of given dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "0b176366",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "(200000, 8)"
+      ]
+     },
+     "execution_count": 3,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.shape"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5c0a9f3b",
+   "metadata": {},
+   "source": [
+    "#### How many integer columns(by default) are given in the dataset?\n",
+    "#### What is the data type of ' pickup_datetime' feature in your data?*"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "98d76391",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "ride_id                int64\n",
+       "fare_amount          float64\n",
+       "pickup_datetime       object\n",
+       "pickup_longitude     float64\n",
+       "pickup_latitude      float64\n",
+       "dropoff_longitude    float64\n",
+       "dropoff_latitude     float64\n",
+       "passenger_count        int64\n",
+       "dtype: object"
+      ]
+     },
+     "execution_count": 4,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.dtypes"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "a73767a5",
+   "metadata": {},
+   "source": [
+    "#### How many missing values exists in 'dropoff_longitude' column?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "4d5cc481",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "1"
+      ]
+     },
+     "execution_count": 5,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "df.dropoff_longitude.isnull().sum()"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fdfafb95",
+   "metadata": {},
+   "source": [
+    "#### What is the average fare amount?\n",
+    "#### Remove the null values from the dataframe to answer the following question"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "70d419ef",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Average Fare Amount: 11.359955250000002\n"
+     ]
+    }
+   ],
+   "source": [
+    "average_fare_amount = df['fare_amount'].mean()\n",
+    "\n",
+    "print(\"Average Fare Amount:\", average_fare_amount)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "2fea6cc9",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df_clean = df.dropna()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "6483a3e5",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Average Fare Amount: 11.359891549457748\n"
+     ]
+    }
+   ],
+   "source": [
+    "average_fare_amount = df_clean['fare_amount'].mean()\n",
+    "\n",
+    "print(\"Average Fare Amount:\", average_fare_amount)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ec7793a4",
+   "metadata": {},
+   "source": [
+    "#### Which of the following is the correct syntax to convert 'pickup_datetime' to datetime datatype?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "bbccfa5f",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "pd.to_datetime(df['pickup_datetime'])"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b523788d",
+   "metadata": {},
+   "source": [
+    "#### Calculate distance between each pickup and dropoff points using Haversine formula. \n",
+    "#### What is the median haversine distance between pickup and dropoff location according to the given dataset?\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "f224f6f1",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "from math import radians, sin, cos, sqrt, atan2"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "dbe0a8e3",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "def haversine_distance(lat1, lon1, lat2, lon2):\n",
+    "    # Convert latitude and longitude from degrees to radians\n",
+    "    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])\n",
+    "\n",
+    "    # Haversine formula\n",
+    "    dlon = lon2 - lon1\n",
+    "    dlat = lat2 - lat1\n",
+    "    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2\n",
+    "    c = 2 * atan2(sqrt(a), sqrt(1-a))\n",
+    "    radius_of_earth = 6371  # Earth's radius in kilometers\n",
+    "    distance = radius_of_earth * c\n",
+    "\n",
+    "    return distance"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "70679de5",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df['haversine_distance'] = df.apply(lambda row: haversine_distance(row['pickup_latitude'], row['pickup_longitude'], row['dropoff_latitude'], row['dropoff_longitude']), axis=1)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "700e426e",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Median Haversine Distance: 2.1209923961833708\n"
+     ]
+    }
+   ],
+   "source": [
+    "median_haversine_distance = df['haversine_distance'].median()\n",
+    "print(\"Median Haversine Distance:\", median_haversine_distance)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "304a051f",
+   "metadata": {},
+   "source": [
+    "#### What is the maximum haversine distance between pickup and dropoff location according to the given dataset?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "29a451ca",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Maximum Haversine Distance: 16409.239135313168\n"
+     ]
+    }
+   ],
+   "source": [
+    "maximum_haversine_distance = df['haversine_distance'].max()\n",
+    "print(\"Maximum Haversine Distance:\", maximum_haversine_distance)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9e3c14f4",
+   "metadata": {},
+   "source": [
+    "#### How many rides have 0.0 haversine distance between pickup and dropoff location according to the given dataset"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "dfac23e1",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of rides with 0.0 Haversine distance: 5632\n"
+     ]
+    }
+   ],
+   "source": [
+    "rides_with_zero_distance = df[df['haversine_distance'] == 0.0]\n",
+    "num_rides_with_zero_distance = len(rides_with_zero_distance)\n",
+    "\n",
+    "print(\"Number of rides with 0.0 Haversine distance:\", num_rides_with_zero_distance)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c2b1f329",
+   "metadata": {},
+   "source": [
+    "#### What is the mean 'fare_amount' for rides with 0 haversine distance?*\n",
+    "Do you sense something fishy? Try to analyze, and give your expert opinion in Jupyter Notebook.\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "dff5517b",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Mean fare amount for rides with 0.0 Haversine distance: 11.585317826704546\n"
+     ]
+    }
+   ],
+   "source": [
+    "mean_fare_for_zero_distance = rides_with_zero_distance['fare_amount'].mean()\n",
+    "print(\"Mean fare amount for rides with 0.0 Haversine distance:\", mean_fare_for_zero_distance)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "bceab387",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# Haversine distance of 0.0 between pickup and dropoff locations typically indicates that \n",
+    "# the pickup and dropoff points are the same or very close together. \n",
+    "# Moreover Uber might be having a fixed ammount for every ride irrespective of distance.\n",
+    "# the price of a ride extends this fixed ammount further by ammount of distance covered."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "6bf2ef04",
+   "metadata": {},
+   "source": [
+    "#### What is the maximum 'fare_amount' for a ride?"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "e55073fb",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Maximum fare amount for a ride: 499.0\n"
+     ]
+    }
+   ],
+   "source": [
+    "maximum_fare_amount = df['fare_amount'].max()\n",
+    "print(\"Maximum fare amount for a ride:\", maximum_fare_amount)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3a8f8536",
+   "metadata": {},
+   "source": [
+    "#### What is the haversine distance between pickup and dropoff location for the costliest ride?*\n",
+    "Do you sense something fishy? Try to analyze, and give your expert opinion in Jupyter Notebook."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "8bdd68bf",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Haversine distance for the costliest ride: 0.0007899213191009994\n"
+     ]
+    }
+   ],
+   "source": [
+    "costliest_ride = df[df['fare_amount'] == maximum_fare_amount].iloc[0]\n",
+    "\n",
+    "haversine_distance_costliest = haversine_distance(\n",
+    "    costliest_ride['pickup_latitude'],\n",
+    "    costliest_ride['pickup_longitude'],\n",
+    "    costliest_ride['dropoff_latitude'],\n",
+    "    costliest_ride['dropoff_longitude']\n",
+    ")\n",
+    "\n",
+    "print(\"Haversine distance for the costliest ride:\", haversine_distance_costliest)\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "ded27068",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "# High fare amount for a ride could be indicative of a data issue or an outlier. \n",
+    "# It's possible that such a high fare amount could be due to data entry errors, anomalies, or even fraudulent activities.."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "24b9d7e5",
+   "metadata": {},
+   "source": [
+    "#### How many rides were recorded in the year 2014"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "a4fc67a0",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of rides recorded in the year 2014: 29968\n"
+     ]
+    }
+   ],
+   "source": [
+    "df['pickup_datetime'] = pd.to_datetime(df['pickup_datetime'])\n",
+    "\n",
+    "df['pickup_year'] = df['pickup_datetime'].dt.year\n",
+    "\n",
+    "rides_in_2014 = len(df[df['pickup_year'] == 2014])\n",
+    "\n",
+    "print(\"Number of rides recorded in the year 2014:\", rides_in_2014)\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "c77a6f94",
+   "metadata": {},
+   "source": [
+    "#### How many rides were recorded in the first quarter of 2014"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "id": "dd677450",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Number of rides recorded in the first quarter of 2014: 7687\n"
+     ]
+    }
+   ],
+   "source": [
+    "df['pickup_quarter'] = df['pickup_datetime'].dt.quarter\n",
+    "\n",
+    "rides_in_q1_2014 = len(df[(df['pickup_year'] == 2014) & (df['pickup_quarter'] == 1)])\n",
+    "\n",
+    "print(\"Number of rides recorded in the first quarter of 2014:\", rides_in_q1_2014)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "0b5bc0e8",
+   "metadata": {},
+   "source": [
+    "#### On which day of the week in September 2010, maximum rides were recorded "
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "7af035b9",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Day of the week in September 2010 with the maximum rides: Thursday\n"
+     ]
+    }
+   ],
+   "source": [
+    "df['day_of_week'] = df['pickup_datetime'].dt.dayofweek\n",
+    "df['year_month'] = df['pickup_datetime'].dt.strftime('%Y-%m')\n",
+    "\n",
+    "rides_in_september_2010 = df[df['year_month'] == '2010-09']\n",
+    "\n",
+    "rides_by_day_of_week = rides_in_september_2010['day_of_week'].value_counts()\n",
+    "\n",
+    "day_with_max_rides = rides_by_day_of_week.idxmax()\n",
+    "\n",
+    "days_of_week = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']\n",
+    "max_rides_day_name = days_of_week[day_with_max_rides]\n",
+    "\n",
+    "print(\"Day of the week in September 2010 with the maximum rides:\", max_rides_day_name)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "e7d6f442",
+   "metadata": {},
+   "source": [
+    "#### Apply a Machine Learning Algorithm to predict the fare amount given following input features:\n",
+    "passenger_count, distance and ride_week_day.\n",
+    "\n",
+    "Perform a 70-30 split of data.\n",
+    "\n",
+    "Which algorithm gives the least adjusted R square value?*\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "25d89ea9",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import pandas as pd\n",
+    "from sklearn.model_selection import train_test_split\n",
+    "from sklearn.preprocessing import StandardScaler, OneHotEncoder\n",
+    "from sklearn.compose import ColumnTransformer\n",
+    "from sklearn.linear_model import LinearRegression\n",
+    "from sklearn.metrics import mean_squared_error\n",
+    "from sklearn.ensemble import RandomForestRegressor\n",
+    "from sklearn.metrics import r2_score"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "id": "0dacdfee",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "df.dropna(inplace=True)\n",
+    "\n",
+    "X = df[['passenger_count', 'haversine_distance', 'day_of_week']]\n",
+    "y = df['fare_amount']\n",
+    "\n",
+    "X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "id": "5770af29",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/html": [
+       "<div>\n",
+       "<style scoped>\n",
+       "    .dataframe tbody tr th:only-of-type {\n",
+       "        vertical-align: middle;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe tbody tr th {\n",
+       "        vertical-align: top;\n",
+       "    }\n",
+       "\n",
+       "    .dataframe thead th {\n",
+       "        text-align: right;\n",
+       "    }\n",
+       "</style>\n",
+       "<table border=\"1\" class=\"dataframe\">\n",
+       "  <thead>\n",
+       "    <tr style=\"text-align: right;\">\n",
+       "      <th></th>\n",
+       "      <th>passenger_count</th>\n",
+       "      <th>haversine_distance</th>\n",
+       "      <th>day_of_week</th>\n",
+       "    </tr>\n",
+       "  </thead>\n",
+       "  <tbody>\n",
+       "    <tr>\n",
+       "      <th>194320</th>\n",
+       "      <td>1</td>\n",
+       "      <td>1.270348</td>\n",
+       "      <td>3</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>774</th>\n",
+       "      <td>2</td>\n",
+       "      <td>6.406598</td>\n",
+       "      <td>5</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>75676</th>\n",
+       "      <td>1</td>\n",
+       "      <td>3.016657</td>\n",
+       "      <td>2</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>37127</th>\n",
+       "      <td>1</td>\n",
+       "      <td>1.546083</td>\n",
+       "      <td>4</td>\n",
+       "    </tr>\n",
+       "    <tr>\n",
+       "      <th>96757</th>\n",
+       "      <td>5</td>\n",
+       "      <td>2.492464</td>\n",
+       "      <td>6</td>\n",
+       "    </tr>\n",
+       "  </tbody>\n",
+       "</table>\n",
+       "</div>"
+      ],
+      "text/plain": [
+       "        passenger_count  haversine_distance  day_of_week\n",
+       "194320                1            1.270348            3\n",
+       "774                   2            6.406598            5\n",
+       "75676                 1            3.016657            2\n",
+       "37127                 1            1.546083            4\n",
+       "96757                 5            2.492464            6"
+      ]
+     },
+     "execution_count": 25,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "X_train.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "id": "c9a93d57",
+   "metadata": {},
+   "outputs": [
+    {
+     "data": {
+      "text/plain": [
+       "194320     6.1\n",
+       "774       16.0\n",
+       "75676     13.5\n",
+       "37127      7.5\n",
+       "96757      8.1\n",
+       "Name: fare_amount, dtype: float64"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "y_train.head()"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "id": "8a066dff",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Root Mean Squared Error (RMSE): 10.138402052152694\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = LinearRegression()\n",
+    "\n",
+    "model.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred = model.predict(X_test)\n",
+    "\n",
+    "rmse = np.sqrt(mean_squared_error(y_test, y_pred))\n",
+    "print(f\"Root Mean Squared Error (RMSE): {rmse}\")"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "id": "c04bd483",
+   "metadata": {},
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Root Mean Squared Error (RMSE): 6.169777898467877\n"
+     ]
+    }
+   ],
+   "source": [
+    "model2 = RandomForestRegressor()\n",
+    "\n",
+    "model2.fit(X_train, y_train)\n",
+    "\n",
+    "y_pred = model2.predict(X_test)\n",
+    "\n",
+    "rmse = np.sqrt(mean_squared_error(y_test, y_pred))\n",
+    "print(f\"Root Mean Squared Error (RMSE): {rmse}\")"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "Python 3 (ipykernel)",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.9.17"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
